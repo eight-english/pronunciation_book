@@ -1,0 +1,12 @@
+[
+  {"id": 1, "word": "a", "image": "1.png", "audio": "001_a.mp3"},
+  {"id": 2, "word": "able", "image": "2.png", "audio": "002_able.mp3"},
+  {"id": 3, "word": "about", "image": "3.png", "audio": "003_about.mp3"},
+  {"id": 4, "word": "absolutely", "image": "4.png", "audio": "004_absolutely.mp3"},
+  {"id": 5, "word": "accept", "image": "5.png", "audio": "005_accept.mp3"},
+  {"id": 6, "word": "account", "image": "6.png", "audio": "006_account.mp3"},
+  {"id": 7, "word": "across", "image": "7.png", "audio": "007_across.mp3"},
+  {"id": 8, "word": "action", "image": "8.png", "audio": "008_action.mp3"},
+  {"id": 9, "word": "actually", "image": "9.png", "audio": "009_actually.mp3"},
+  {"id": 10, "word": "add", "image": "10.png", "audio": "010_add.mp3"}
+]

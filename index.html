@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>単語帳テスト（10単語）</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    img { width: 200px; margin: 10px; }
+    .word { font-size: 24px; margin: 10px; }
+    button { margin: 5px; padding: 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>単語帳テスト（10単語）</h1>
+  <img id="wordImage" src="">
+  <div class="word" id="wordText"></div>
+  <audio id="wordAudio"></audio>
+  <br>
+  <button onclick="startAutoPlay()">▶️ 全部再生スタート</button>
+  <button onclick="markLearned()">✅ 覚えた（スキップ）</button>
+
+  <script>
+    let words = [];
+    let current = 0;
+    let autoMode = false;
+
+    async function loadWords() {
+      const res = await fetch("words.json");
+      words = await res.json();
+      showWord();
+    }
+
+    function showWord() {
+      if (current >= words.length) {
+        alert("すべて終了！🎉");
+        autoMode = false;
+        return;
+      }
+      let w = words[current];
+      if (w.learned) { nextWord(); return; }
+      document.getElementById("wordImage").src = w.image;
+      document.getElementById("wordText").textContent = w.word;
+      document.getElementById("wordAudio").src = w.audio;
+      if (autoMode) playAudio();
+    }
+
+    function playAudio() {
+      const audio = document.getElementById("wordAudio");
+      audio.play();
+      audio.onended = () => { nextWord(); };
+    }
+
+    function markLearned() {
+      words[current].learned = true;
+      nextWord();
+    }
+
+    function nextWord() {
+      current++;
+      showWord();
+    }
+
+    function startAutoPlay() {
+      autoMode = true;
+      current = 0;
+      showWord();
+    }
+
+    loadWords();
+  </script>
+</body>
+</html>

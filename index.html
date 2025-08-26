@@ -1,214 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>単語帳（改良版）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>単語帳（100語版）</title>
   <style>
-    body { font-family: sans-serif; margin: 0; background: #f9f9f9; }
-    h1 { text-align: center; font-size: 1.5rem; padding: 10px; }
-    .content { text-align: center; padding: 10px; }
-    img { max-width: 90%; height: auto; margin: 10px auto; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-    .word { font-size: 2rem; font-weight: bold; margin: 10px 0; }
-    #progress { margin: 5px; font-size: 1rem; color: #555; }
-    .controls { position: fixed; bottom: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: space-around; background: #fff; border-top: 1px solid #ddd; padding: 10px; }
-    button { flex: 1; margin: 5px; padding: 10px; font-size: 0.9rem; border: none; border-radius: 8px; background: #007BFF; color: white; }
-    button:active { background: #0056b3; }
-    .skip { background: #28a745; }
-    .skip:active { background: #1e7e34; }
-    .list { max-height: 250px; overflow-y: auto; margin: 10px; border-top: 1px solid #ddd; background: #fff; }
-    .list-item { padding: 6px; text-align: left; cursor: pointer; border-bottom: 1px solid #eee; font-size: 1rem; }
-    .list-item.active { background: #007BFF; color: white; font-weight: bold; }
-    .list-item.learned { color: #28a745; font-weight: bold; }
-    .filters { padding: 10px; background: #fff; border-top: 1px solid #ddd; }
+    body { font-family: sans-serif; margin: 20px; text-align: center; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 20px 0;
+    }
+    .controls button {
+      font-size: 18px;
+      padding: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .controls button:nth-child(6) { background: #28a745; }
+    .controls button:hover { opacity: 0.85; }
   </style>
 </head>
 <body>
-  <h1>単語帳（改良版）</h1>
 
-  <div class="content">
-    <img id="wordImage" src="">
-    <div class="word" id="wordText"></div>
-    <div id="progress"></div>
-    <audio id="wordAudio"></audio>
+  <h1>単語帳（100語版）</h1>
+
+  <!-- 単語表示 -->
+  <div id="word-area">
+    <h2 id="word">Loading...</h2>
+    <p id="counter"></p>
   </div>
 
-  <!-- 検索とフィルター -->
-  <div class="filters">
-    <input type="text" id="searchBox" placeholder="単語を検索" oninput="filterList()">
-    <label>
-      <input type="checkbox" id="hideLearned" onchange="renderList()"> 覚えた単語を隠す
-    </label>
-  </div>
-
-  <!-- リスト -->
-  <div class="list" id="wordList"></div>
-
-  <!-- 下の操作ボタン -->
+  <!-- ボタン -->
   <div class="controls">
-    <button onclick="startAutoPlay()">▶️ 流しっぱなし</button>
-    <button onclick="playOnce()">▶️ 1単語再生</button>
-    <button onclick="stopAudio()">⏹ 停止</button>
-    <button onclick="repeatAudio()">🔁 リピート</button>
-    <button onclick="changeSpeed()">⏩ 速度</button>
-    <button class="skip" onclick="markLearned()">✅ 覚えた</button>
-    <button onclick="nextWord()">➡️ 次へ</button>
-    <button onclick="startShuffle()">🎲 シャッフル</button>
+    <button id="playAll">▶All</button>
+    <button id="playOne">▶</button>
+    <button id="stop">■</button>
+    <button id="repeat">🔁</button>
+    <button id="speed">⏩</button>
+    <button id="markKnown">✅</button>
+    <button id="next">➡</button>
+    <button id="shuffle">🎲</button>
   </div>
+
+  <audio id="audio" controls style="display:none;"></audio>
 
   <script>
     let words = [];
-    let current = 0;
-    let autoMode = false;
-    let learnedSet = new Set();
-    let renderIndex = 0;
-    const chunkSize = 50;
-    let filteredWords = [];
-    let speeds = [0.75, 1.0, 1.25, 1.5];
-    let speedIndex = 1;
+    let currentIndex = 0;
+    let isRepeat = false;
+    let playbackRate = 1;
+
+    const audio = document.getElementById("audio");
+    const wordEl = document.getElementById("word");
+    const counterEl = document.getElementById("counter");
 
     async function loadWords() {
       const res = await fetch("words.json");
       words = await res.json();
-
-      const saved = localStorage.getItem("learnedWords");
-      if (saved) {
-        learnedSet = new Set(JSON.parse(saved));
-        words.forEach(w => { if (learnedSet.has(w.id)) w.learned = true; });
-      }
-
-      filteredWords = words;
-      showWord();
-      initList();
+      updateWord();
     }
 
-    function showWord() {
-      if (current >= words.length) {
-        alert("すべて終了！🎉");
-        autoMode = false;
-        return;
-      }
-      let w = words[current];
-      if (w.learned && document.getElementById("hideLearned").checked) { nextWord(); return; }
-      document.getElementById("wordImage").src = w.image;
-      document.getElementById("wordText").textContent = w.word;
-      document.getElementById("wordAudio").src = w.audio;
-      document.getElementById("wordAudio").playbackRate = speeds[speedIndex];
-      document.getElementById("progress").textContent = `単語 ${current + 1} / ${words.length}`;
-      if (autoMode) playAuto();
-
-      const items = document.querySelectorAll(".list-item");
-      items.forEach(el => el.classList.remove("active"));
-      if (items[current]) items[current].classList.add("active");
+    function updateWord() {
+      const w = words[currentIndex];
+      wordEl.textContent = w.word;
+      counterEl.textContent = `単語 ${w.id} / ${words.length}`;
+      audio.src = w.audio;
+      audio.playbackRate = playbackRate;
     }
 
-    function playAuto() {
-      const audio = document.getElementById("wordAudio");
-      audio.play();
-      audio.onended = () => { nextWord(); };
-    }
-
-    function playOnce() {
-      document.getElementById("wordAudio").play();
-    }
-
-    function stopAudio() {
-      const audio = document.getElementById("wordAudio");
-      audio.pause();
-      audio.currentTime = 0;
-    }
-
-    function repeatAudio() {
-      const audio = document.getElementById("wordAudio");
-      audio.currentTime = 0;
-      audio.play();
-    }
-
-    function changeSpeed() {
-      speedIndex = (speedIndex + 1) % speeds.length;
-      const audio = document.getElementById("wordAudio");
-      audio.playbackRate = speeds[speedIndex];
-      alert("再生速度: " + speeds[speedIndex] + "x");
-    }
-
-    function markLearned() {
-      words[current].learned = true;
-      learnedSet.add(words[current].id);
-      localStorage.setItem("learnedWords", JSON.stringify([...learnedSet]));
-      nextWord();
-    }
-
-    function nextWord() {
-      current++;
-      showWord();
-    }
-
-    function startAutoPlay() {
-      autoMode = true;
-      current = 0;
-      showWord();
-      document.getElementById("wordAudio").play();
-    }
-
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    function startShuffle() {
-      autoMode = true;
-      current = 0;
-      words = shuffleArray([...words]);
-      filteredWords = words;
-      showWord();
-      document.getElementById("wordAudio").play();
-      initList();
-    }
-
-    function initList() {
-      renderIndex = 0;
-      document.getElementById("wordList").innerHTML = "";
-      renderMore();
-    }
-
-    function renderMore() {
-      const listDiv = document.getElementById("wordList");
-      const end = Math.min(renderIndex + chunkSize, filteredWords.length);
-      for (let i = renderIndex; i < end; i++) {
-        const w = filteredWords[i];
-        const div = document.createElement("div");
-        div.className = "list-item" 
-          + (i === current ? " active" : "") 
-          + (w.learned ? " learned" : "");
-        div.textContent = (w.learned ? "✅ " : "") + w.word;
-        div.onclick = () => {
-          current = words.indexOf(w);
-          autoMode = false;
-          showWord();
-          document.getElementById("wordAudio").play();
-        };
-        listDiv.appendChild(div);
-      }
-      renderIndex = end;
-    }
-
-    function filterList() {
-      const filter = document.getElementById("searchBox").value.toLowerCase();
-      filteredWords = words.filter(w => w.word.toLowerCase().includes(filter));
-      renderIndex = 0;
-      document.getElementById("wordList").innerHTML = "";
-      renderMore();
-    }
-
-    document.getElementById("wordList").addEventListener("scroll", function() {
-      const listDiv = document.getElementById("wordList");
-      if (listDiv.scrollTop + listDiv.clientHeight >= listDiv.scrollHeight - 5) {
-        renderMore();
-      }
-    });
+    document.getElementById("playOne").onclick = () => audio.play();
+    document.getElementById("stop").onclick = () => audio.pause();
+    document.getElementById("next").onclick = () => { currentIndex = (currentIndex + 1) % words.length; updateWord(); };
+    document.getElementById("shuffle").onclick = () => { currentIndex = Math.floor(Math.random() * words.length); updateWord(); };
+    document.getElementById("repeat").onclick = () => { isRepeat = !isRepeat; audio.loop = isRepeat; };
+    document.getElementById("speed").onclick = () => { playbackRate = playbackRate === 1 ? 1.5 : (playbackRate === 1.5 ? 0.75 : 1); updateWord(); };
 
     loadWords();
   </script>

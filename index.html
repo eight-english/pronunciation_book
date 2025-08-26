@@ -5,28 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>単語帳（100語版）</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 20px;
-      text-align: center;
-    }
+    body { font-family: sans-serif; text-align: center; margin: 20px; }
+    #word { font-size: 32px; margin: 20px 0 10px; }
+    #counter { margin-bottom: 10px; font-size: 16px; color: #333; }
+    #image { max-width: 200px; margin: 10px auto; display: block; }
 
-    h1 {
-      margin-bottom: 10px;
-    }
-
-    #word {
-      font-size: 32px;
-      margin: 20px 0 10px;
-    }
-
-    #counter {
-      margin-bottom: 20px;
-      font-size: 16px;
-      color: #333;
-    }
-
-    /* 上段ボタン（▶ / ■ / ✅） */
     .controls-top {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -34,8 +17,6 @@
       max-width: 420px;
       margin: 20px auto;
     }
-
-    /* 下段ボタン（⬅ / ▶All / 🎲 / ➡） */
     .controls-bottom {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -43,7 +24,6 @@
       max-width: 500px;
       margin: 15px auto;
     }
-
     button {
       font-size: 22px;
       padding: 18px 0;
@@ -53,36 +33,30 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
-      transition: 0.2s;
       width: 100%;
       min-height: 64px;
     }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    .play { background: #28a745; }   /* ▶ 再生 → 緑 */
-    .stop { background: #dc3545; }   /* ■ 停止 → 赤 */
-    .known { background: #17a2b8; }  /* ✅ 覚えた → 水色 */
+    button:hover { opacity: 0.85; }
+    .play { background: #28a745; }   /* ▶ 再生 */
+    .speed { background: #ff9800; }  /* ⏩ 速度 */
+    .known { background: #17a2b8; }  /* ✅ 覚えた */
   </style>
 </head>
 <body>
 
   <h1>単語帳（100語版）</h1>
-
-  <!-- 単語表示 -->
   <div id="word">loading...</div>
+  <img id="image" src="" alt="word image">
   <p id="counter">0 / 100</p>
 
-  <!-- 上段ボタン -->
+  <!-- 上段 -->
   <div class="controls-top">
-    <button id="playOne" class="play">▶</button>
-    <button id="stop" class="stop">■</button>
+    <button id="playToggle" class="play">▶</button>
+    <button id="speed" class="speed">⏩</button>
     <button id="markKnown" class="known">✅</button>
   </div>
 
-  <!-- 下段ボタン -->
+  <!-- 下段 -->
   <div class="controls-bottom">
     <button id="prev">⬅</button>
     <button id="playAll">▶All</button>
@@ -90,44 +64,56 @@
     <button id="next">➡</button>
   </div>
 
-  <!-- 音声プレイヤー -->
   <audio id="audio" controls style="display:none;"></audio>
 
   <script>
     let words = [];
     let currentIndex = 0;
     let isPlayingAll = false;
+    let isPlaying = false;
+    let speedOptions = [1, 1.5, 0.75];
+    let speedIndex = 0;
+
     const audio = document.getElementById("audio");
     const wordEl = document.getElementById("word");
+    const imgEl = document.getElementById("image");
     const counterEl = document.getElementById("counter");
 
-    // ✅ words.json を読み込む
     fetch("words.json")
       .then(res => res.json())
       .then(data => {
-        words = data.slice(0, 100); // 100語だけテスト用に利用
+        words = data.slice(0, 100);
         updateWord();
       });
 
     function updateWord() {
-      if (!words.length) return;
       const w = words[currentIndex];
       wordEl.textContent = w.word;
       counterEl.textContent = `単語 ${w.id} / ${words.length}`;
       audio.src = w.audio;
+      audio.playbackRate = speedOptions[speedIndex];
+      imgEl.src = w.image;
     }
 
-    // ▶ 再生
-    document.getElementById("playOne").onclick = () => audio.play();
-
-    // ■ 停止
-    document.getElementById("stop").onclick = () => {
-      audio.pause();
-      audio.currentTime = 0;
-      isPlayingAll = false;
+    // ▶ 再生/停止トグル
+    document.getElementById("playToggle").onclick = () => {
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+      } else {
+        audio.play();
+        isPlaying = true;
+      }
     };
 
-    // ✅ 覚えた（localStorage保存）
+    // ⏩ 速度切替
+    document.getElementById("speed").onclick = () => {
+      speedIndex = (speedIndex + 1) % speedOptions.length;
+      audio.playbackRate = speedOptions[speedIndex];
+      alert("速度: " + speedOptions[speedIndex] + "x");
+    };
+
+    // ✅ 覚えた
     document.getElementById("markKnown").onclick = () => {
       const w = words[currentIndex];
       localStorage.setItem("known_" + w.id, true);
@@ -140,7 +126,7 @@
       updateWord();
     };
 
-    // ▶All 連続再生
+    // ▶All
     document.getElementById("playAll").onclick = () => {
       isPlayingAll = true;
       audio.play();
@@ -159,15 +145,16 @@
       updateWord();
     };
 
-    // ▶All 再生用イベント
+    // ▶All 再生継続
     audio.addEventListener("ended", () => {
+      isPlaying = false;
       if (isPlayingAll) {
         currentIndex = (currentIndex + 1) % words.length;
         updateWord();
         audio.play();
+        isPlaying = true;
       }
     });
   </script>
-
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>単語帳（721語版）</title>
+  <title>発音学習者の必修単語帳</title>
   <style>
     body {
       font-family: sans-serif;
@@ -11,10 +11,16 @@
       margin: 0;
       padding: 10px;
     }
+    h2 {
+      font-size: 1.6em;
+      margin: 15px 0;
+    }
     img {
       max-width: 95%;  /* スマホ横幅いっぱい */
       height: auto;
       margin: 20px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
     .controls {
       display: flex;
@@ -34,7 +40,13 @@
       border-radius: 8px;
       border: none;
       cursor: pointer;
+      color: white;
     }
+    button.green { background: #28a745; }
+    button.red { background: #dc3545; }
+    button.blue { background: #007bff; }
+    button.orange { background: #fd7e14; }
+    button.gray { background: #6c757d; }
     /* 単語リスト */
     .list {
       max-width: 600px;
@@ -45,6 +57,7 @@
       border: 1px solid #ddd;
       padding: 10px;
       border-radius: 8px;
+      background: #fafafa;
     }
     .list-item {
       display: flex;
@@ -61,33 +74,33 @@
     }
     .play-icon {
       cursor: pointer;
-      font-size: 1.2em;
+      font-size: 1.3em;
     }
   </style>
 </head>
 <body>
-  <h2 id="wordTitle">単語帳</h2>
+  <h2 id="wordTitle">発音学習者の必修単語帳</h2>
   <img id="wordImage" src="" alt="Word image">
 
   <!-- 🎛️ コントロールボタン -->
   <div class="controls">
     <!-- 速度調整 -->
     <div class="row">
-      <button onclick="setSpeed(0.5)">x0.5</button>
-      <button onclick="setSpeed(0.75)">x0.75</button>
-      <button onclick="setSpeed(1)">x1</button>
+      <button class="gray" onclick="setSpeed(0.5)">x0.5</button>
+      <button class="gray" onclick="setSpeed(0.75)">x0.75</button>
+      <button class="gray" onclick="setSpeed(1)">x1</button>
     </div>
     <!-- 再生操作 -->
     <div class="row">
-      <button onclick="prevWord()">⬅</button>
-      <button onclick="togglePlay()">▶️</button>
-      <button onclick="nextWord()">➡</button>
+      <button class="blue" onclick="prevWord()">⬅</button>
+      <button class="green" onclick="togglePlay()">▶️</button>
+      <button class="blue" onclick="nextWord()">➡</button>
     </div>
     <!-- モード操作 -->
     <div class="row">
-      <button id="playAll">▶All</button>
-      <button onclick="shuffleWord()">🎲</button>
-      <button onclick="toggleKnown()">✅</button>
+      <button id="playAll" class="blue">▶All</button>
+      <button class="orange" onclick="shuffleWord()">🎲</button>
+      <button class="green" onclick="toggleKnown()">✅</button>
     </div>
   </div>
 

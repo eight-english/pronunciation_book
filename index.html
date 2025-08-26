@@ -2,22 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>単語帳テスト（10単語）</title>
+  <title>単語帳（2モード対応）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; text-align: center; }
-    img { width: 200px; margin: 10px; }
-    .word { font-size: 24px; margin: 10px; }
-    button { margin: 5px; padding: 10px; font-size: 16px; }
+    body { font-family: sans-serif; text-align: center; margin: 0; background: #f9f9f9;}
+    img { max-width: 90%; height: auto; margin-top: 20px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);}
+    .word { font-size: 2rem; font-weight: bold; margin: 20px 0;}
+    .controls { position: fixed; bottom: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: space-around; background: #fff; border-top: 1px solid #ddd; padding: 10px;}
+    button { flex: 1; margin: 5px; padding: 15px; font-size: 1.1rem; border: none; border-radius: 8px; background: #007BFF; color: white;}
+    button:active { background: #0056b3;}
+    .skip { background: #28a745;}
+    .skip:active { background: #1e7e34;}
+    .mode { background: #6c757d;}
+    .mode:active { background: #5a6268;}
   </style>
 </head>
 <body>
-  <h1>単語帳テスト（10単語）</h1>
+  <h1>単語帳（2モード対応）</h1>
   <img id="wordImage" src="">
   <div class="word" id="wordText"></div>
   <audio id="wordAudio"></audio>
-  <br>
-  <button onclick="startAutoPlay()">▶️ 全部再生スタート</button>
-  <button onclick="markLearned()">✅ 覚えた（スキップ）</button>
+
+  <div class="controls">
+    <button onclick="startAutoPlay()">▶️ 流しっぱなし</button>
+    <button onclick="playOnce()">▶️ 再生（1単語）</button>
+    <button class="skip" onclick="markLearned()">✅ 覚えた</button>
+    <button onclick="nextWord()">➡️ 次へ</button>
+  </div>
 
   <script>
     let words = [];
@@ -41,13 +52,18 @@
       document.getElementById("wordImage").src = w.image;
       document.getElementById("wordText").textContent = w.word;
       document.getElementById("wordAudio").src = w.audio;
-      if (autoMode) playAudio();
+      if (autoMode) playAuto();
     }
 
-    function playAudio() {
+    function playAuto() {
       const audio = document.getElementById("wordAudio");
       audio.play();
       audio.onended = () => { nextWord(); };
+    }
+
+    function playOnce() {
+      const audio = document.getElementById("wordAudio");
+      audio.play();
     }
 
     function markLearned() {
@@ -64,6 +80,7 @@
       autoMode = true;
       current = 0;
       showWord();
+      document.getElementById("wordAudio").play(); // iPhone対応
     }
 
     loadWords();

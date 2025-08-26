@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>単語帳（完成版）</title>
+  <title>単語帳（改良版）</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: sans-serif; margin: 0; background: #f9f9f9; }
@@ -10,24 +10,26 @@
     .content { text-align: center; padding: 10px; }
     img { max-width: 90%; height: auto; margin: 10px auto; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
     .word { font-size: 2rem; font-weight: bold; margin: 10px 0; }
+    #progress { margin: 5px; font-size: 1rem; color: #555; }
     .controls { position: fixed; bottom: 0; width: 100%; display: flex; flex-wrap: wrap; justify-content: space-around; background: #fff; border-top: 1px solid #ddd; padding: 10px; }
-    button { flex: 1; margin: 5px; padding: 12px; font-size: 1rem; border: none; border-radius: 8px; background: #007BFF; color: white; }
+    button { flex: 1; margin: 5px; padding: 10px; font-size: 0.9rem; border: none; border-radius: 8px; background: #007BFF; color: white; }
     button:active { background: #0056b3; }
     .skip { background: #28a745; }
     .skip:active { background: #1e7e34; }
     .list { max-height: 250px; overflow-y: auto; margin: 10px; border-top: 1px solid #ddd; background: #fff; }
-    .list-item { padding: 8px; text-align: left; cursor: pointer; border-bottom: 1px solid #eee; font-size: 1rem; }
+    .list-item { padding: 6px; text-align: left; cursor: pointer; border-bottom: 1px solid #eee; font-size: 1rem; }
     .list-item.active { background: #007BFF; color: white; font-weight: bold; }
     .list-item.learned { color: #28a745; font-weight: bold; }
     .filters { padding: 10px; background: #fff; border-top: 1px solid #ddd; }
   </style>
 </head>
 <body>
-  <h1>単語帳（完成版）</h1>
+  <h1>単語帳（改良版）</h1>
 
   <div class="content">
     <img id="wordImage" src="">
     <div class="word" id="wordText"></div>
+    <div id="progress"></div>
     <audio id="wordAudio"></audio>
   </div>
 
@@ -46,9 +48,12 @@
   <div class="controls">
     <button onclick="startAutoPlay()">▶️ 流しっぱなし</button>
     <button onclick="playOnce()">▶️ 1単語再生</button>
+    <button onclick="stopAudio()">⏹ 停止</button>
+    <button onclick="repeatAudio()">🔁 リピート</button>
+    <button onclick="changeSpeed()">⏩ 速度</button>
     <button class="skip" onclick="markLearned()">✅ 覚えた</button>
     <button onclick="nextWord()">➡️ 次へ</button>
-    <button onclick="startShuffle()">🎲 シャッフル再生</button>
+    <button onclick="startShuffle()">🎲 シャッフル</button>
   </div>
 
   <script>
@@ -59,12 +64,13 @@
     let renderIndex = 0;
     const chunkSize = 50;
     let filteredWords = [];
+    let speeds = [0.75, 1.0, 1.25, 1.5];
+    let speedIndex = 1;
 
     async function loadWords() {
       const res = await fetch("words.json");
       words = await res.json();
 
-      // 保存進捗を復元
       const saved = localStorage.getItem("learnedWords");
       if (saved) {
         learnedSet = new Set(JSON.parse(saved));
@@ -87,9 +93,10 @@
       document.getElementById("wordImage").src = w.image;
       document.getElementById("wordText").textContent = w.word;
       document.getElementById("wordAudio").src = w.audio;
+      document.getElementById("wordAudio").playbackRate = speeds[speedIndex];
+      document.getElementById("progress").textContent = `単語 ${current + 1} / ${words.length}`;
       if (autoMode) playAuto();
 
-      // リストのハイライト更新
       const items = document.querySelectorAll(".list-item");
       items.forEach(el => el.classList.remove("active"));
       if (items[current]) items[current].classList.add("active");
@@ -103,6 +110,25 @@
 
     function playOnce() {
       document.getElementById("wordAudio").play();
+    }
+
+    function stopAudio() {
+      const audio = document.getElementById("wordAudio");
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    function repeatAudio() {
+      const audio = document.getElementById("wordAudio");
+      audio.currentTime = 0;
+      audio.play();
+    }
+
+    function changeSpeed() {
+      speedIndex = (speedIndex + 1) % speeds.length;
+      const audio = document.getElementById("wordAudio");
+      audio.playbackRate = speeds[speedIndex];
+      alert("再生速度: " + speeds[speedIndex] + "x");
     }
 
     function markLearned() {
@@ -121,7 +147,7 @@
       autoMode = true;
       current = 0;
       showWord();
-      document.getElementById("wordAudio").play(); // iPhone対応
+      document.getElementById("wordAudio").play();
     }
 
     function shuffleArray(array) {
@@ -142,7 +168,6 @@
       initList();
     }
 
-    // リスト関連
     function initList() {
       renderIndex = 0;
       document.getElementById("wordList").innerHTML = "";

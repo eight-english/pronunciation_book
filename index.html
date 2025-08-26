@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Word Player</title>
+  <title>単語帳（721語版）</title>
   <style>
     body {
       font-family: sans-serif;
@@ -12,7 +12,7 @@
       padding: 10px;
     }
     img {
-      max-width: 90%;  /* スマホ横幅いっぱい */
+      max-width: 95%;  /* スマホ横幅いっぱい */
       height: auto;
       margin: 20px 0;
     }
@@ -28,9 +28,12 @@
       gap: 10px;
     }
     button {
-      font-size: 1.2em;
-      padding: 12px 18px;
+      font-size: 1.3em;
+      padding: 14px 22px;
       flex: 1;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
     }
     /* 単語リスト */
     .list {
@@ -63,7 +66,7 @@
   </style>
 </head>
 <body>
-  <h2 id="wordTitle">Word Player</h2>
+  <h2 id="wordTitle">単語帳</h2>
   <img id="wordImage" src="" alt="Word image">
 
   <!-- 🎛️ コントロールボタン -->
@@ -97,8 +100,8 @@
   </label>
   <div id="wordList" class="list"></div>
 
-  <script src="words.json"></script>
   <script>
+    let words = [];
     let currentIndex = 0;
     let isPlaying = false;
     let audio = document.getElementById("audio");
@@ -107,15 +110,28 @@
     const batchSize = 50;
 
     // =================
+    // JSON 読み込み
+    // =================
+    fetch("words.json")
+      .then(res => res.json())
+      .then(data => {
+        words = data;
+        updateWord();      // 初期表示
+        refreshList();     // リスト描画
+      });
+
+    // =================
     // カード表示
     // =================
     function updateWord() {
+      if (words.length === 0) return;
       const w = words[currentIndex];
       document.getElementById("wordTitle").innerText = w.id + ". " + w.word;
       document.getElementById("wordImage").src = w.image;
     }
 
     function togglePlay() {
+      if (words.length === 0) return;
       const w = words[currentIndex];
       if (!isPlaying) {
         audio.src = w.audio;
@@ -129,22 +145,26 @@
     }
 
     function prevWord() {
+      if (words.length === 0) return;
       currentIndex = (currentIndex - 1 + words.length) % words.length;
       updateWord();
     }
 
     function nextWord() {
+      if (words.length === 0) return;
       currentIndex = (currentIndex + 1) % words.length;
       updateWord();
     }
 
     function shuffleWord() {
+      if (words.length === 0) return;
       currentIndex = Math.floor(Math.random() * words.length);
       updateWord();
       togglePlay();
     }
 
     function toggleKnown() {
+      if (words.length === 0) return;
       const w = words[currentIndex];
       if (knownWords[w.id]) {
         delete knownWords[w.id];
@@ -159,13 +179,13 @@
     // ALL再生（未習得だけ）
     // =================
     document.getElementById("playAll").onclick = () => {
+      if (words.length === 0) return;
       const unknownWords = words.filter(w => !knownWords[w.id]);
       if (unknownWords.length === 0) {
         alert("🎉 すべて覚えています！");
         return;
       }
-      let i = 0;
-      playNextUnknown(unknownWords, i);
+      playNextUnknown(unknownWords, 0);
     };
 
     function playNextUnknown(list, i) {
@@ -246,10 +266,6 @@
     });
 
     document.getElementById("filterUnknown").addEventListener("change", refreshList);
-
-    // 初期化
-    updateWord();
-    renderNextBatch();
   </script>
 </body>
 </html>

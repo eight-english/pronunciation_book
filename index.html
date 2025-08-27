@@ -11,16 +11,14 @@
       margin: 0;
       padding: 10px;
     }
-    h2 {
+    h1 {
+      margin: 10px 0;
       font-size: 1.6em;
-      margin: 15px 0;
     }
     img {
-      max-width: 95%;  /* スマホ横幅いっぱい */
+      max-width: 90%;  /* スマホ横幅いっぱい */
       height: auto;
-      margin: 20px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      margin: 10px 0 20px;
     }
     .controls {
       display: flex;
@@ -34,19 +32,10 @@
       gap: 10px;
     }
     button {
-      font-size: 1.3em;
-      padding: 14px 22px;
+      font-size: 1.2em;
+      padding: 12px 18px;
       flex: 1;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      color: white;
     }
-    button.green { background: #28a745; }
-    button.red { background: #dc3545; }
-    button.blue { background: #007bff; }
-    button.orange { background: #fd7e14; }
-    button.gray { background: #6c757d; }
     /* 単語リスト */
     .list {
       max-width: 600px;
@@ -57,7 +46,6 @@
       border: 1px solid #ddd;
       padding: 10px;
       border-radius: 8px;
-      background: #fafafa;
     }
     .list-item {
       display: flex;
@@ -74,33 +62,31 @@
     }
     .play-icon {
       cursor: pointer;
-      font-size: 1.3em;
+      font-size: 1.2em;
     }
   </style>
 </head>
 <body>
-  <h2 id="wordTitle">発音学習者の必修単語帳</h2>
+  <!-- タイトル -->
+  <h1>発音学習者の必修単語帳</h1>
+
+  <!-- 現在の単語 -->
+  <h2 id="wordTitle"></h2>
   <img id="wordImage" src="" alt="Word image">
 
   <!-- 🎛️ コントロールボタン -->
   <div class="controls">
-    <!-- 速度調整 -->
-    <div class="row">
-      <button class="gray" onclick="setSpeed(0.5)">x0.5</button>
-      <button class="gray" onclick="setSpeed(0.75)">x0.75</button>
-      <button class="gray" onclick="setSpeed(1)">x1</button>
-    </div>
     <!-- 再生操作 -->
     <div class="row">
-      <button class="blue" onclick="prevWord()">⬅</button>
-      <button class="green" onclick="togglePlay()">▶️</button>
-      <button class="blue" onclick="nextWord()">➡</button>
+      <button onclick="prevWord()">⬅</button>
+      <button onclick="togglePlay()">▶️</button>
+      <button onclick="nextWord()">➡</button>
     </div>
     <!-- モード操作 -->
     <div class="row">
-      <button id="playAll" class="blue">▶All</button>
-      <button class="orange" onclick="shuffleWord()">🎲</button>
-      <button class="green" onclick="toggleKnown()">✅</button>
+      <button id="playAll">▶All</button>
+      <button onclick="shuffleWord()">🎲</button>
+      <button onclick="toggleKnown()">✅</button>
     </div>
   </div>
 
@@ -113,8 +99,8 @@
   </label>
   <div id="wordList" class="list"></div>
 
+  <script src="words.json?v=3"></script>
   <script>
-    let words = [];
     let currentIndex = 0;
     let isPlaying = false;
     let audio = document.getElementById("audio");
@@ -123,28 +109,15 @@
     const batchSize = 50;
 
     // =================
-    // JSON 読み込み
-    // =================
-    fetch("words.json")
-      .then(res => res.json())
-      .then(data => {
-        words = data;
-        updateWord();      // 初期表示
-        refreshList();     // リスト描画
-      });
-
-    // =================
     // カード表示
     // =================
     function updateWord() {
-      if (words.length === 0) return;
       const w = words[currentIndex];
       document.getElementById("wordTitle").innerText = w.id + ". " + w.word;
       document.getElementById("wordImage").src = w.image;
     }
 
     function togglePlay() {
-      if (words.length === 0) return;
       const w = words[currentIndex];
       if (!isPlaying) {
         audio.src = w.audio;
@@ -158,26 +131,22 @@
     }
 
     function prevWord() {
-      if (words.length === 0) return;
       currentIndex = (currentIndex - 1 + words.length) % words.length;
       updateWord();
     }
 
     function nextWord() {
-      if (words.length === 0) return;
       currentIndex = (currentIndex + 1) % words.length;
       updateWord();
     }
 
     function shuffleWord() {
-      if (words.length === 0) return;
       currentIndex = Math.floor(Math.random() * words.length);
       updateWord();
       togglePlay();
     }
 
     function toggleKnown() {
-      if (words.length === 0) return;
       const w = words[currentIndex];
       if (knownWords[w.id]) {
         delete knownWords[w.id];
@@ -192,7 +161,6 @@
     // ALL再生（未習得だけ）
     // =================
     document.getElementById("playAll").onclick = () => {
-      if (words.length === 0) return;
       const unknownWords = words.filter(w => !knownWords[w.id]);
       if (unknownWords.length === 0) {
         alert("🎉 すべて覚えています！");
@@ -209,10 +177,6 @@
       audio.src = w.audio;
       audio.play();
       audio.onended = () => playNextUnknown(list, i + 1);
-    }
-
-    function setSpeed(rate) {
-      audio.playbackRate = rate;
     }
 
     // =================
@@ -279,6 +243,10 @@
     });
 
     document.getElementById("filterUnknown").addEventListener("change", refreshList);
+
+    // 初期化
+    updateWord();
+    renderNextBatch();
   </script>
 </body>
 </html>

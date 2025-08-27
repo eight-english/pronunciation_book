@@ -31,9 +31,15 @@
       gap: 10px;
     }
     button {
-      font-size: 1.2em;
-      padding: 12px 18px;
+      font-size: 1.5em;      /* 大きめでタップしやすい */
+      padding: 14px 0;
       flex: 1;
+      line-height: 1;        /* 文字を中央に */
+      display: flex;
+      align-items: center;   /* 中央縦揃え */
+      justify-content: center; /* 中央横揃え */
+      min-width: 60px;
+      min-height: 60px;
     }
     /* 単語リスト */
     .list {
@@ -116,8 +122,6 @@
   <label>
     <input type="checkbox" id="filterUnknown"> 覚えてない単語だけ表示
   </label>
-  <br>
-  <input type="text" id="searchBox" placeholder="🔍 単語を検索" style="width:95%;padding:6px;margin:8px 0;">
   <div id="wordList" class="list"></div>
 
   <!-- ↑戻るボタン -->
@@ -228,13 +232,12 @@
     function renderNextBatch() {
       const listEl = document.getElementById("wordList");
       const filterUnknown = document.getElementById("filterUnknown").checked;
-      const keyword = document.getElementById("searchBox").value.toLowerCase();
       const end = Math.min(renderIndex + batchSize, words.length);
 
       for (let i = renderIndex; i < end; i++) {
         const w = words[i];
         const isKnown = !!knownWords[w.id];
-        if ((filterUnknown && isKnown) || (keyword && !w.word.toLowerCase().includes(keyword))) continue;
+        if (filterUnknown && isKnown) continue;
 
         const div = document.createElement("div");
         div.className = "list-item";
@@ -296,7 +299,6 @@
     });
 
     document.getElementById("filterUnknown").addEventListener("change", refreshList);
-    document.getElementById("searchBox").addEventListener("input", refreshList);
 
     // =================
     // ↑戻るボタン

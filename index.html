@@ -70,20 +70,21 @@
       cursor: pointer;
       font-size: 1.2em;
     }
-    /* ⬆ 戻るボタン */
+    /* ↑戻るボタン */
     #backToTop {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      font-size: 1.5em;
-      padding: 12px 16px;
+      font-size: 1.8em;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: #007BFF;
       color: white;
       border: none;
       display: none;
       z-index: 1000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
     }
   </style>
 </head>
@@ -115,10 +116,12 @@
   <label>
     <input type="checkbox" id="filterUnknown"> 覚えてない単語だけ表示
   </label>
+  <br>
+  <input type="text" id="searchBox" placeholder="🔍 単語を検索" style="width:95%;padding:6px;margin:8px 0;">
   <div id="wordList" class="list"></div>
 
-  <!-- ⬆ 戻るボタン -->
-  <button id="backToTop">⬆</button>
+  <!-- ↑戻るボタン -->
+  <button id="backToTop">↑</button>
 
   <script>
     let words = [];
@@ -225,12 +228,13 @@
     function renderNextBatch() {
       const listEl = document.getElementById("wordList");
       const filterUnknown = document.getElementById("filterUnknown").checked;
+      const keyword = document.getElementById("searchBox").value.toLowerCase();
       const end = Math.min(renderIndex + batchSize, words.length);
 
       for (let i = renderIndex; i < end; i++) {
         const w = words[i];
         const isKnown = !!knownWords[w.id];
-        if (filterUnknown && isKnown) continue;
+        if ((filterUnknown && isKnown) || (keyword && !w.word.toLowerCase().includes(keyword))) continue;
 
         const div = document.createElement("div");
         div.className = "list-item";
@@ -269,10 +273,9 @@
       // 🔊 共通audioで再生
       listEl.querySelectorAll(".play-icon").forEach(icon => {
         icon.onclick = (e) => {
-          const audioSrc = e.target.getAttribute("data-audio");
           audio.pause();
           audio.currentTime = 0;
-          audio.src = audioSrc;
+          audio.src = e.target.getAttribute("data-audio");
           audio.play();
         };
       });
@@ -293,9 +296,10 @@
     });
 
     document.getElementById("filterUnknown").addEventListener("change", refreshList);
+    document.getElementById("searchBox").addEventListener("input", refreshList);
 
     // =================
-    // ⬆ 戻るボタン
+    // ↑戻るボタン
     // =================
     const backToTop = document.getElementById("backToTop");
     backToTop.onclick = () => {

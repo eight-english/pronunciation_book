@@ -248,12 +248,14 @@
         };
       });
 
-      // 🔊 再生
+      // 🔊 共通audioで再生
       listEl.querySelectorAll(".play-icon").forEach(icon => {
         icon.onclick = (e) => {
           const audioSrc = e.target.getAttribute("data-audio");
-          const tmpAudio = new Audio(audioSrc);
-          tmpAudio.play();
+          audio.pause();
+          audio.currentTime = 0;
+          audio.src = audioSrc;
+          audio.play();
         };
       });
     }
